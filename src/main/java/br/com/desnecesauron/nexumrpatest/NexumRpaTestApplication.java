@@ -17,8 +17,7 @@ public class NexumRpaTestApplication {
     public static void main(String[] args) throws InterruptedException {
         SpringApplication.run(NexumRpaTestApplication.class, args);
 
-        System.setProperty("webdriver.chrome.driver", "/home/desnecesauron/Desktop/nexum-rpa-test/src/main/resources" +
-                "/chromedriver");
+        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver");
         ChromeOptions options = new ChromeOptions();
 //		options.addArguments("--headless");
         options.addArguments("--incognito");
@@ -47,7 +46,7 @@ public class NexumRpaTestApplication {
         int i = 0;
         for (WebElement element : webElements) {
             i++;
-            System.out.println("Volta " + i);
+//            System.out.println("Volta " + i);
 
             WebElement webElementLinkInItem = driver.findElement(By.cssSelector("div > div > div > div > div > div >" +
                     " section > ul > li:nth-child(" + i + ") > div > div> a"));
@@ -73,18 +72,37 @@ public class NexumRpaTestApplication {
             }
             if (!isConsole) continue;
 
+            String strPrice = webElementPriceInItem.getText();
+            String strPriceLowerCase = webElementPriceInItem.getText().toLowerCase();
+
+            if(strPrice.contains("De R$"))
+                strPrice = strPrice.substring(strPriceLowerCase.indexOf("por r$")+4, strPriceLowerCase.indexOf("em até ")).trim();
+            else
+                strPrice = strPrice.substring(strPriceLowerCase.indexOf("por r$")+4, strPriceLowerCase.indexOf(",")+3).trim();
+
+            if(strPrice.toLowerCase().contains("no pix"))
+            {
+                strPrice = strPrice.substring(0, strPrice.toLowerCase().indexOf("no pix")).trim();
+            }
+
+            if(strPrice.toLowerCase().contains("à vista"))
+            {
+                strPrice = strPrice.substring(0, strPrice.toLowerCase().indexOf("à vista")).trim();
+            }
+
             System.out.println("Link: " + webElementLinkInItem.getAttribute("href"));
             System.out.println("Title: " + webElementTitleInItem.getText());
-            System.out.println("Price: " + webElementPriceInItem.getText());
+//            System.out.println("Price: " + webElementPriceInItem.getText());
+            System.out.println("Price: " + strPrice);
 
         }
 
-        System.exit(0);
 
         // mercado livre ------------------------------------------------------------------------------------
         driver.get("https://lista.mercadolivre.com.br/xbox-serie-s");
         // div > div > section > ol > li
 //        String cssSelectorLiGeneralMercadoLivre = "div > div > section > ol > li > div > div > a";
+        Thread.sleep(2000);
         String cssSelectorLiGeneralMercadoLivre = "div > div > section > ol > li > div > div > a> div > div";
         List<WebElement> itensMercadoLivre = driver.findElements(By.cssSelector(cssSelectorLiGeneralMercadoLivre));
 
