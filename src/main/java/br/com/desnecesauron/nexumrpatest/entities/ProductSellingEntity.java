@@ -5,11 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "products_selling")
+@Table
 public class ProductSellingEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +23,8 @@ public class ProductSellingEntity {
     @Column(nullable = false)
     private String title;
     @Column(nullable = false)
-    private float price;
+    private double price;
+    @Column(nullable = false)
+    private LocalDateTime timestampGenerated;
 
 }

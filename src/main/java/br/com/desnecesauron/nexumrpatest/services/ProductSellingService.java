@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,11 +23,7 @@ public class ProductSellingService {
     private ProductSellingRepository productSellingRepository;
 
     public boolean save(List<ProductSellingEntity> productSellingEntities) {
-
-        productSellingEntities.forEach(productSellingEntity -> {
-            productSellingRepository.save(productSellingEntity);
-        });
-
+        productSellingEntities.forEach(productSellingRepository::save);
         return true;
     }
 
@@ -38,13 +35,12 @@ public class ProductSellingService {
         return new ChromeDriver(options);
     }
 
+    // if get me some time remaining i'll do this
     public void getLastDataScrapInDb() {
 
     }
 
     public void initTask() {
-        System.out.println(save(Arrays.asList(new ProductSellingEntity(55555L, "aaaaa", "bbbbb", 1234.15f))));
-
         threeMostCheapXbox();
     }
 
@@ -84,7 +80,8 @@ public class ProductSellingService {
                     " section > ul > li:nth-child(" + i + ") > div > div> a:nth-child(2) > div"));
 //			System.out.println(element.getText());
 
-            List<String> wordsUnnecessary = Arrays.asList("bateria", "suporte", "skin", "case", "capa", "charge",
+            List<String> wordsUnnecessary = Arrays.asList("fonte", "bateria", "suporte", "skin", "case", "capa",
+                    "charge",
                     "serie x", "series x");
             String titleCompare = webElementTitleInItem.getText().toLowerCase();
             boolean isConsole = true;
@@ -125,10 +122,12 @@ public class ProductSellingService {
 //            System.out.println("Price: " + webElementPriceInItem.getText());
             System.out.println("Price: " + strPrice);
 
-            float flPrice = Float.parseFloat(strPrice.replace(".", "").replace(",", ".").substring(2).trim());
-            productSellingEntities.add(new ProductSellingEntity(Integer.toUnsignedLong(i),
-                    webElementLinkInItem.getAttribute("href"),
-                    webElementTitleInItem.getText(), flPrice));
+            double doublePrice = Double.parseDouble(strPrice.replace(".", "")
+                    .replace(",", ".").substring(2).trim());
+
+            productSellingEntities.add(new ProductSellingEntity(null,
+                    webElementLinkInItem.getAttribute("href"), webElementTitleInItem.getText(), doublePrice,
+                    LocalDateTime.now()));
         }
 
 

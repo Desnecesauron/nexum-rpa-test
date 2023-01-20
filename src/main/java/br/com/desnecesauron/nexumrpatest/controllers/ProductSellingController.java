@@ -11,9 +11,7 @@ public class ProductSellingController {
     private ProductSellingService productSellingService;
 
     public void init() {
-//        productSellingRepository.findById(45L);
         productSellingService.initTask();
-
     }
 
 }
