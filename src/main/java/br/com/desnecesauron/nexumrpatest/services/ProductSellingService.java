@@ -137,41 +137,48 @@ public class ProductSellingService {
         driver.get("https://lista.mercadolivre.com.br/xbox-serie-s");
         // div > div > section > ol > li
 //        String cssSelectorLiGeneralMercadoLivre = "div > div > section > ol > li > div > div > a";
-        String cssSelectorLiGeneralMercadoLivre = "div > div > section > ol > li > div > div > a> div > div";
-        List<WebElement> itensMercadoLivre = driver.findElements(By.cssSelector(cssSelectorLiGeneralMercadoLivre));
+        String cssSelectorTitleMercadoLivre = "div > div > section > ol > li > div > div > a> div > div > h2";
+        String cssSelectorPriceMercadoLivre = "div > div > section > ol > li > div > div > a> div > div > div " +
+                ">div>div > span:nth-child(1)";
+        String cssSelectorUrlMercadoLivre = "div > div > section > ol > li > div > div > div > a";
+        // "div > div > section > ol > li > div > div > a> div > div:nth-child(1)";
+
+        // "div > div > section > ol > li > div > div > a> div > div > h2" - title ad
+        // "div > div > section > ol > li > div > div > a> div > div > div >div>div > span:nth-child(1)" - price
+        // "div > div > section > ol > li > div > div > div > a" - url
+
+        List<WebElement> titleItemMercadoLivre = driver.findElements(By.cssSelector(cssSelectorTitleMercadoLivre));
+        List<WebElement> priceItemMercadoLivre = driver.findElements(By.cssSelector(cssSelectorPriceMercadoLivre));
+        List<WebElement> urlItemMercadoLivre = driver.findElements(By.cssSelector(cssSelectorUrlMercadoLivre));
 
         System.out.println("length");
-        System.out.println(itensMercadoLivre.toArray().length);
-        System.out.println("array");
-        System.out.println(Arrays.toString(itensMercadoLivre.toArray()));
+        System.out.println(titleItemMercadoLivre.toArray().length);
+
+        List<ProductSellingEntity> productsMercadoLivre = new ArrayList<>();
+
         i = 0;
-        for (WebElement element : itensMercadoLivre) {
-            i++;
+        for (WebElement element : titleItemMercadoLivre) {
+
             System.out.println("Volta " + i);
             System.out.println(element.getText());
-         /*
-         List<WebElement> webElementsInItemMercadoLivre =
-                    driver.findElements(By.cssSelector(cssSelectorLiGeneralMercadoLivre + "div > div > section > ol >" +
-                            " li > div > div > a> div > div"));
 
-            for (WebElement elementItem : webElementsInItemMercadoLivre) {
-                System.out.println(elementItem.getText());
-            }
-            */
+            WebElement priceItemElement = priceItemMercadoLivre.get(i);
+            WebElement urlItemElement = urlItemMercadoLivre.get(i);
 
-			/*
+            double doublePrice = Double.parseDouble(priceItemElement.getText().substring(0,
+                            priceItemElement.getText().indexOf(" reais")).trim().replace(".", "")
+                    .replace(",", ".").substring(2).trim());
 
-			int rowData = 0;
-            for (WebElement elementItem : webElementsInItem) {
-                if (rowData == 0 || rowData == 3 || rowData == 4)
-                    System.out.println(elementItem.getText());
-                rowData++;
-            }
-
-			*/
+            productsMercadoLivre.add(new ProductSellingEntity(null,
+                    urlItemElement.getAttribute("href"), element.getText(), doublePrice,
+                    LocalDateTime.now()));
+            
+            i++;
         }
 
         driver.close();
+
+        productsMercadoLivre.forEach(System.out::println);
 
         productSellingEntities.forEach(System.out::println);
         if (save(productSellingEntities)) {
