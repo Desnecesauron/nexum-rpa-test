@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 
@@ -16,7 +18,7 @@ import java.util.Comparator;
 public class ProductSellingEntity implements Comparator<ProductSellingEntity> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Long id;
 
     @Column(nullable = false, length = 1500)
@@ -31,5 +33,16 @@ public class ProductSellingEntity implements Comparator<ProductSellingEntity> {
     @Override
     public int compare(ProductSellingEntity p1, ProductSellingEntity p2) {
         return Double.compare(p1.getPrice(), p2.getPrice());
+    }
+
+    @Override
+    public String toString() {
+        return "ProductSellingEntity\n{" +
+                "\nid=" + id +
+                ",\nurl='" + url + '\'' +
+                ",\ntitle='" + title + '\'' +
+                ",\nprice= R$" + new BigDecimal(price).setScale(2, RoundingMode.HALF_UP) +
+                ",\ntimestampGenerated=" + timestampGenerated +
+                "\n}";
     }
 }

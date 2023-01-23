@@ -12,7 +12,10 @@ import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 @Configurable
@@ -42,9 +45,17 @@ public class ProductSellingService {
         return new ChromeDriver(options);
     }
 
-    // if I get some time remaining I'll do this
     public void getLastDataScrapInDb() {
+        List<ProductSellingEntity> sixLastGets = productSellingRepository.findTop6ByOrderByTimestampGeneratedDesc();
+        if (sixLastGets.size() == 0) {
+            System.out.println("Db is clear, continuing.");
+            return;
+        }
+        sixLastGets.forEach(System.out::println);
+    }
 
+    public void cleanDb() {
+        productSellingRepository.deleteAll();
     }
 
     public List<ProductSellingEntity> getThreeMostCheap(List<ProductSellingEntity> productSellingEntities) {
@@ -61,6 +72,12 @@ public class ProductSellingService {
     }
 
     public void initTask() {
+
+        System.out.println("Before all: showing the data of last dataScrap");
+        getLastDataScrapInDb();
+        System.out.println("Now: cleaning the database to only stay the most recently dataScrap");
+        cleanDb();
+
         ChromeDriver driver = newChromeDriver();
 
         List<ProductSellingEntity> casasBahiaProducts = getDataScrapXboxCasasBahia(driver);
@@ -124,10 +141,6 @@ public class ProductSellingService {
                 strPrice = strPrice.substring(0, strPrice.toLowerCase().indexOf("à vista")).trim();
             }
 
-            System.out.println("Link: " + webElementLinkInItem.getAttribute("href"));
-            System.out.println("Title: " + webElementTitleInItem.getText());
-            System.out.println("Price: " + strPrice);
-
             double doublePrice = Double.parseDouble(strPrice.replace(".", "")
                     .replace(",", ".").substring(2).trim());
 
@@ -135,7 +148,6 @@ public class ProductSellingService {
                     webElementLinkInItem.getAttribute("href"), webElementTitleInItem.getText(), doublePrice,
                     LocalDateTime.now()));
         }
-
         return productSellingEntities;
     }
 
