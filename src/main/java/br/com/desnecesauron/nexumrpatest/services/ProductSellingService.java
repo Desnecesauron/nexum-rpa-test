@@ -36,9 +36,12 @@ public class ProductSellingService {
 
     public void initTask() {
         System.out.println("\n\nBefore all: showing the data of last dataScrap\n");
-        getLastDataScrapInDb();
+        if (getLastDataScrapInDb() == null)
+            System.out.println("Db is clear, continuing.");
+
         System.out.println("\n\nNow: cleaning the database to only stay the most recently dataScrap\n");
-        cleanDb();
+        if (cleanDb())
+            System.out.println("Cleaned Database with success\n\n");
 
         System.out.println("Starting chromedriver");
         ChromeDriver driver = newChromeDriver();
@@ -48,8 +51,9 @@ public class ProductSellingService {
         System.out.println("Filtering data to get the three most cheap items in Casas Bahia\n\n");
         System.out.println("Three most cheap data in Casas Bahia:");
         casasBahiaProducts = getThreeMostCheap(casasBahiaProducts);
-        if (saveAll(casasBahiaProducts))
-            System.out.println("Saved successfully!");
+        if (casasBahiaProducts != null)
+            if (saveAll(casasBahiaProducts))
+                System.out.println("Saved successfully!");
 
 
         System.out.println("Searching the items on Mercado Livre and saving data in a List");
@@ -57,8 +61,9 @@ public class ProductSellingService {
         System.out.println("Filtering data to get the three most cheap items in Mercado Livre\n\n");
         System.out.println("Three most cheap data in Mercado Livre:");
         mercadoLivreProducts = getThreeMostCheap(mercadoLivreProducts);
-        if (saveAll(mercadoLivreProducts))
-            System.out.println("Saved successfully!");
+        if (mercadoLivreProducts != null)
+            if (saveAll(mercadoLivreProducts))
+                System.out.println("Saved successfully!");
 
         System.out.println("Closing chromedriver...");
         driver.close();
@@ -76,17 +81,24 @@ public class ProductSellingService {
         return true;
     }
 
-    public void getLastDataScrapInDb() {
+    public List<ProductSellingEntity> getLastDataScrapInDb() {
         List<ProductSellingEntity> sixEntLastSave = productSellingRepository.findTop6ByOrderByTimestampGeneratedDesc();
-        if (sixEntLastSave.size() == 0) {
-            System.out.println("Db is clear, continuing.");
-            return;
-        }
+        if (sixEntLastSave.size() == 0)
+            return null;
+
         sixEntLastSave.forEach(System.out::println);
+        return sixEntLastSave;
     }
 
-    private void cleanDb() {
-        productSellingRepository.deleteAll();
+    private boolean cleanDb() {
+        try {
+            productSellingRepository.deleteAll();
+        } catch (Exception ex) {
+            System.out.println("Error: " + ex);
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public List<ProductSellingEntity> getThreeMostCheap(List<ProductSellingEntity> productSellingEntities) {
@@ -97,9 +109,15 @@ public class ProductSellingService {
         List<ProductSellingEntity> sellingEntities = new ArrayList<>();
         productSellingEntities.sort(pSEntityComparator);
         // getting the 3 most cheap
-        for (int j = 0; j < 3; j++) {
-            System.out.println(productSellingEntities.get(j).toString());
-            sellingEntities.add(productSellingEntities.get(j));
+        try {
+            for (int j = 0; j < 3; j++) {
+                System.out.println(productSellingEntities.get(j).toString());
+                sellingEntities.add(productSellingEntities.get(j));
+            }
+        } catch (IndexOutOfBoundsException ex) {
+            System.out.println("Error: " + ex);
+            ex.printStackTrace();
+            return null;
         }
         return sellingEntities;
     }
