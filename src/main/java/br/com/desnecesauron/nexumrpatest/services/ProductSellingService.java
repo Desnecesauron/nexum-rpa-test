@@ -119,11 +119,11 @@ public class ProductSellingService {
 
             // webElements for title, price and URL values, changing by index
             WebElement webElementLinkInItem = driver.findElement(By.cssSelector("div > div > div > div > div > div >" +
-                    " section > ul > li:nth-child(" + index + ") > div > div> a"));
+                    " section > ul > li:nth-child(" + (index + 1) + ") > div > div> a"));
             WebElement webElementTitleInItem = driver.findElement(By.cssSelector("div > div > div > div > div > div >" +
-                    " section > ul > li:nth-child(" + index + ") > div > div> a  > h2"));
+                    " section > ul > li:nth-child(" + (index + 1) + ") > div > div> a  > h2"));
             WebElement webElementPriceInItem = driver.findElement(By.cssSelector("div > div > div > div > div > div >" +
-                    " section > ul > li:nth-child(" + index + ") > div > div> a:nth-child(2) > div"));
+                    " section > ul > li:nth-child(" + (index + 1) + ") > div > div> a:nth-child(2) > div"));
 
             // comparing the title if this is the required console
             String titleCompare = webElementTitleInItem.getText().toLowerCase();
