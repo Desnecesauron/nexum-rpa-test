@@ -23,52 +23,15 @@ public class ProductSellingService {
     @Autowired
     private ProductSellingRepository productSellingRepository;
 
-    private final List<String> wordsUnnecessary = Arrays.asList("fonte", "bateria", "suporte", "skin", "case", "capa",
+    private final List<String> WORDS_UNNECESSARY = Arrays.asList("fonte", "bateria", "suporte", "skin", "case", "capa",
             "charge", "serie x", "series x", "xbox one", "alça", "ventilador");
 
-    public boolean saveAll(List<ProductSellingEntity> productSellingEntities) {
-        try {
-            productSellingEntities.forEach(productSellingRepository::save);
-        } catch (IllegalArgumentException | OptimisticLockException ex) {
-            System.out.println("Error: " + ex);
-            ex.printStackTrace();
-            return false;
-        }
-        return true;
-    }
-
-    public ChromeDriver newChromeDriver() {
+    private ChromeDriver newChromeDriver() {
         System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver");
         ChromeOptions options = new ChromeOptions();
-//		options.addArguments("--headless");
+//		options.addArguments("--headless"); //using this, don't work correctly
         options.addArguments("--incognito");
         return new ChromeDriver(options);
-    }
-
-    public void getLastDataScrapInDb() {
-        List<ProductSellingEntity> sixLastGets = productSellingRepository.findTop6ByOrderByTimestampGeneratedDesc();
-        if (sixLastGets.size() == 0) {
-            System.out.println("Db is clear, continuing.");
-            return;
-        }
-        sixLastGets.forEach(System.out::println);
-    }
-
-    public void cleanDb() {
-        productSellingRepository.deleteAll();
-    }
-
-    public List<ProductSellingEntity> getThreeMostCheap(List<ProductSellingEntity> productSellingEntities) {
-        Comparator<ProductSellingEntity> pSellingEComparator =
-                Comparator.comparingDouble(ProductSellingEntity::getPrice);
-
-        List<ProductSellingEntity> sellingEntities = new ArrayList<>();
-        productSellingEntities.sort(pSellingEComparator);
-        for (int j = 0; j < 3; j++) {
-            System.out.println(productSellingEntities.get(j).toString());
-            sellingEntities.add(productSellingEntities.get(j));
-        }
-        return sellingEntities;
     }
 
     public void initTask() {
@@ -102,36 +65,77 @@ public class ProductSellingService {
         System.out.println("Exiting application...");
     }
 
+    public boolean saveAll(List<ProductSellingEntity> productSellingEntitiesToSave) {
+        try {
+            productSellingEntitiesToSave.forEach(productSellingRepository::save);
+        } catch (IllegalArgumentException | OptimisticLockException ex) {
+            System.out.println("Error: " + ex);
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public void getLastDataScrapInDb() {
+        List<ProductSellingEntity> sixEntLastSave = productSellingRepository.findTop6ByOrderByTimestampGeneratedDesc();
+        if (sixEntLastSave.size() == 0) {
+            System.out.println("Db is clear, continuing.");
+            return;
+        }
+        sixEntLastSave.forEach(System.out::println);
+    }
+
+    private void cleanDb() {
+        productSellingRepository.deleteAll();
+    }
+
+    public List<ProductSellingEntity> getThreeMostCheap(List<ProductSellingEntity> productSellingEntities) {
+        Comparator<ProductSellingEntity> pSEntityComparator =
+                Comparator.comparingDouble(ProductSellingEntity::getPrice);
+
+        // sorting the most cheap to the most expensive
+        List<ProductSellingEntity> sellingEntities = new ArrayList<>();
+        productSellingEntities.sort(pSEntityComparator);
+        // getting the 3 most cheap
+        for (int j = 0; j < 3; j++) {
+            System.out.println(productSellingEntities.get(j).toString());
+            sellingEntities.add(productSellingEntities.get(j));
+        }
+        return sellingEntities;
+    }
+
     private List<ProductSellingEntity> getDataScrapXboxCasasBahia(ChromeDriver driver) {
 
-        // casas bahia
+        // going to casas bahia link
         driver.get("https://www.casasbahia.com.br/console-xbox-serie-s/b?sortby=relevance");
 
-        List<ProductSellingEntity> productSellingEntities = new ArrayList<>();
+        // css Selector for Casas Bahia list items
         String cssSelectorLiGeneralCasasBahia = "div > div > div > div > div > div > div > section > ul > li";
-        List<WebElement> webElements = driver.findElements(By.cssSelector(cssSelectorLiGeneralCasasBahia));
 
-        int i = 0;
-        for (int index = 0; index < webElements.toArray().length; index++) {
-            i++;
+        List<WebElement> webItemElements = driver.findElements(By.cssSelector(cssSelectorLiGeneralCasasBahia));
+        List<ProductSellingEntity> productsCasasBahia = new ArrayList<>();
 
+        for (int index = 0; index < webItemElements.toArray().length; index++) {
+
+            // webElements for title, price and URL values, changing by index
             WebElement webElementLinkInItem = driver.findElement(By.cssSelector("div > div > div > div > div > div >" +
-                    " section > ul > li:nth-child(" + i + ") > div > div> a"));
+                    " section > ul > li:nth-child(" + index + ") > div > div> a"));
             WebElement webElementTitleInItem = driver.findElement(By.cssSelector("div > div > div > div > div > div >" +
-                    " section > ul > li:nth-child(" + i + ") > div > div> a  > h2"));
+                    " section > ul > li:nth-child(" + index + ") > div > div> a  > h2"));
             WebElement webElementPriceInItem = driver.findElement(By.cssSelector("div > div > div > div > div > div >" +
-                    " section > ul > li:nth-child(" + i + ") > div > div> a:nth-child(2) > div"));
+                    " section > ul > li:nth-child(" + index + ") > div > div> a:nth-child(2) > div"));
 
+            // comparing the title if this is the required console
             String titleCompare = webElementTitleInItem.getText().toLowerCase();
-            if (dontIsThisTitleAConsoleNecessary(titleCompare)) continue;
+            if (doNotIsThisTitleAConsoleNecessary(titleCompare)) continue;
 
-            if (webElementPriceInItem.getText().toLowerCase().contains("indisponível")) {
-                continue;
-            }
+            // consulting if is "Indisponível" the item
+            if (webElementPriceInItem.getText().toLowerCase().contains("indisponível")) continue;
 
             String strPrice = webElementPriceInItem.getText();
             String strPriceLowerCase = webElementPriceInItem.getText().toLowerCase();
 
+            // removing "dump text" with the price
             if (strPrice.contains("De R$")) {
                 strPrice = strPrice.substring(strPriceLowerCase.indexOf("por r$") + 4, strPriceLowerCase.indexOf("em " +
                         "até ")).trim();
@@ -140,73 +144,82 @@ public class ProductSellingService {
                         strPriceLowerCase.indexOf(",") + 3).trim();
             }
 
-            if (strPrice.toLowerCase().contains("no pix")) {
+            // removing "dump text" with the price
+            if (strPrice.toLowerCase().contains("no pix"))
                 strPrice = strPrice.substring(0, strPrice.toLowerCase().indexOf("no pix")).trim();
-            }
 
-            if (strPrice.toLowerCase().contains("à vista")) {
+            // removing "dump text" with the price
+            if (strPrice.toLowerCase().contains("à vista"))
                 strPrice = strPrice.substring(0, strPrice.toLowerCase().indexOf("à vista")).trim();
-            }
 
             double doublePrice = Double.parseDouble(strPrice.replace(".", "")
                     .replace(",", ".").substring(2).trim());
 
-            productSellingEntities.add(new ProductSellingEntity(null,
+            // adding to the list the console found
+            productsCasasBahia.add(new ProductSellingEntity(null,
                     webElementLinkInItem.getAttribute("href"), webElementTitleInItem.getText(), doublePrice,
                     LocalDateTime.now()));
         }
-        return productSellingEntities;
+        return productsCasasBahia;
     }
 
     private List<ProductSellingEntity> getDataScrapMercadoLivre(ChromeDriver driver) {
 
-        // mercado livre ------------------------------------------------------------------------------------
+        // going to mercado livre link
         driver.get("https://lista.mercadolivre.com.br/xbox-serie-s");
-        String cssSelectorTitleMercadoLivre = "div > div > section > ol > li > div > div > a> div > div > h2";
-        String cssSelectorPriceMercadoLivre = "div > div > section > ol > li > div > div > a> div > div > div " +
-                ">div>div > span:nth-child(1)";
-        String cssSelectorUrlMercadoLivre = "div > div > section > ol > li > div > div > div > a";
 
-        List<WebElement> titleItemMercadoLivre = driver.findElements(By.cssSelector(cssSelectorTitleMercadoLivre));
-        List<WebElement> priceItemMercadoLivre = driver.findElements(By.cssSelector(cssSelectorPriceMercadoLivre));
-        List<WebElement> urlItemMercadoLivre = driver.findElements(By.cssSelector(cssSelectorUrlMercadoLivre));
+        // css Selectors for Mercado Livre items
+        final String cssSelectorTitleMercadoLivre = "div > div > section > ol > li > div > div > a> div > div > h2";
+        final String cssSelectorPriceMercadoLivre = "div > div > section > ol > li > div > div > a> div > div > div " +
+                ">div>div > span:nth-child(1)";
+        final String cssSelectorUrlMercadoLivre = "div > div > section > ol > li > div > div > div > a";
+
+        // css Selectors for title, price and URL values
+        List<WebElement> titleItemsMercadoLivre = driver.findElements(By.cssSelector(cssSelectorTitleMercadoLivre));
+        List<WebElement> priceItemsMercadoLivre = driver.findElements(By.cssSelector(cssSelectorPriceMercadoLivre));
+        List<WebElement> urlItemsMercadoLivre = driver.findElements(By.cssSelector(cssSelectorUrlMercadoLivre));
 
         List<ProductSellingEntity> productsMercadoLivre = new ArrayList<>();
 
         int i = -1;
-        for (WebElement element : titleItemMercadoLivre) {
+        for (WebElement element : titleItemsMercadoLivre) {
             i++;
 
-            WebElement priceItemElement = priceItemMercadoLivre.get(i);
-            WebElement urlItemElement = urlItemMercadoLivre.get(i);
+            // webElements for price and URL values, changing by index
+            WebElement priceItemElement = priceItemsMercadoLivre.get(i);
+            WebElement urlItemElement = urlItemsMercadoLivre.get(i);
 
+            // comparing the title if this is the required console
             String titleCompare = element.getText().toLowerCase();
-            if (dontIsThisTitleAConsoleNecessary(titleCompare)) continue;
+            if (doNotIsThisTitleAConsoleNecessary(titleCompare)) continue;
 
+            // removing "dump text" with the price
             String strPrice =
                     priceItemElement.getText().substring(0, priceItemElement.getText().indexOf(" reais"))
                             .trim().replace(".", "")
                             .replace(",", ".");
 
-            double doublePrice = Double.parseDouble(strPrice.trim());
-
+            double doublePrice;
             if (strPrice.contains("$"))
                 doublePrice = Double.parseDouble(strPrice.substring(2).trim());
-
+            else
+                doublePrice = Double.parseDouble(strPrice.trim());
+            // adding to the list the console found
             productsMercadoLivre.add(new ProductSellingEntity(null,
                     urlItemElement.getAttribute("href"), element.getText(), doublePrice,
                     LocalDateTime.now()));
         }
-
         return productsMercadoLivre;
     }
 
-    private boolean dontIsThisTitleAConsoleNecessary(String titleCompare) {
-        boolean dontIsConsole = !(titleCompare.contains("xbox") && (titleCompare.contains("series s") ||
-                titleCompare.contains("serie s")));
+    private boolean doNotIsThisTitleAConsoleNecessary(String titleToCompare) {
+        // testing words that MUST be INCLUDED in the title
+        boolean dontIsConsole = !(titleToCompare.contains("xbox") && (titleToCompare.contains("series s") ||
+                titleToCompare.contains("serie s")));
 
-        for (String doNotInclude : wordsUnnecessary) {
-            if (titleCompare.contains(doNotInclude)) {
+        // testing words that do not want to be included in the title
+        for (String doNotInclude : WORDS_UNNECESSARY) {
+            if (titleToCompare.contains(doNotInclude)) {
                 dontIsConsole = true;
                 break;
             }
