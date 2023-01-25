@@ -43,6 +43,6 @@ public class ProductSellingEntity implements Comparator<ProductSellingEntity> {
                 ",\ntitle='" + title + '\'' +
                 ",\nprice= R$" + new BigDecimal(price).setScale(2, RoundingMode.HALF_UP) +
                 ",\ntimestampGenerated=" + timestampGenerated +
-                "\n}";
+                "\n}\n";
     }
 }

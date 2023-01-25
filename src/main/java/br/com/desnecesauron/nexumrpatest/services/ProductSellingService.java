@@ -72,27 +72,34 @@ public class ProductSellingService {
     }
 
     public void initTask() {
-
-        System.out.println("Before all: showing the data of last dataScrap");
+        System.out.println("\n\nBefore all: showing the data of last dataScrap\n");
         getLastDataScrapInDb();
-        System.out.println("Now: cleaning the database to only stay the most recently dataScrap");
+        System.out.println("\n\nNow: cleaning the database to only stay the most recently dataScrap\n");
         cleanDb();
 
+        System.out.println("Starting chromedriver");
         ChromeDriver driver = newChromeDriver();
 
+        System.out.println("\n\nSearching the items on Casas Bahia and saving data in a List");
         List<ProductSellingEntity> casasBahiaProducts = getDataScrapXboxCasasBahia(driver);
+        System.out.println("Filtering data to get the three most cheap items in Casas Bahia\n\n");
         System.out.println("Three most cheap data in Casas Bahia:");
         casasBahiaProducts = getThreeMostCheap(casasBahiaProducts);
         if (saveAll(casasBahiaProducts))
             System.out.println("Saved successfully!");
 
+
+        System.out.println("Searching the items on Mercado Livre and saving data in a List");
         List<ProductSellingEntity> mercadoLivreProducts = getDataScrapMercadoLivre(driver);
+        System.out.println("Filtering data to get the three most cheap items in Mercado Livre\n\n");
         System.out.println("Three most cheap data in Mercado Livre:");
         mercadoLivreProducts = getThreeMostCheap(mercadoLivreProducts);
         if (saveAll(mercadoLivreProducts))
             System.out.println("Saved successfully!");
 
+        System.out.println("Closing chromedriver...");
         driver.close();
+        System.out.println("Exiting application...");
     }
 
     private List<ProductSellingEntity> getDataScrapXboxCasasBahia(ChromeDriver driver) {
